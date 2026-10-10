@@ -1,101 +1,85 @@
-import React, { useState, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-const useMultiAudio = urls => {
-    const [sources] = useState(
-        urls.map(url => {
-            // fetch(url, {
-            //     mode: 'cors',
-            //     headers: {
-            //         'Access-Control-Allow-Origin': '*'
-            //     }
-            // })
-            //     .then(response => response.text())
-            //     .then(data => console.log(data));
-            let audio = new Audio();
-            // audio.crossOrigin = 'anonymous';
-            audio.src = url;
-            return {
-                url,
-                audio: audio,
-            }
-        }),
-    )
+// A readable name for a source: the file name, or the host when there is none.
+function trackName(url) {
+  try {
+    const { hostname, pathname } = new URL(url)
+    const file = pathname.split('/').filter(Boolean).pop()
+    return file ? decodeURIComponent(file) : hostname
+  } catch {
+    return url
+  }
+}
 
-    const [players, setPlayers] = useState(
-        urls.map(url => {
-            return {
-                url,
-                playing: false,
-            }
-        }),
-    )
+function Track({ number, url, playing, onToggle, onStop }) {
+  const audioRef = useRef(null)
 
-    const toggle = targetIndex => () => {
-        const newPlayers = [...players]
-        const currentIndex = players.findIndex(p => p.playing === true)
-        if (currentIndex !== -1 && currentIndex !== targetIndex) {
-            newPlayers[currentIndex].playing = false
-            newPlayers[targetIndex].playing = true
-        } else if (currentIndex !== -1) {
-            newPlayers[targetIndex].playing = false
-        } else {
-            newPlayers[targetIndex].playing = true
-        }
-        setPlayers(newPlayers)
+  // Keep the <audio> element in step with the selected track.
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!playing) {
+      audio.pause()
+      return
     }
+    audio.play().catch((error) => {
+      // AbortError just means we paused before playback started.
+      if (error.name !== 'AbortError') onStop()
+    })
+  }, [playing, onStop])
 
-    useEffect(() => {
-        const promises = []
+  const name = trackName(url)
 
-        sources.forEach((source, i) => {
-            source.audio.crossOrigin = 'anonymous';
-            promises.push(players[i].playing ? source.audio.play() : source.audio.pause());
-            // promises.push(source.audio.play());
-        })
-
-        Promise.all(promises);
-    }, [sources, players])
-
-    useEffect(() => {
-        sources.forEach((source, i) => {
-            source.audio.addEventListener('ended', () => {
-                const newPlayers = [...players]
-                newPlayers[i].playing = false
-                setPlayers(newPlayers)
-            })
-        })
-        return () => {
-            sources.forEach((source, i) => {
-                source.audio.removeEventListener('ended', () => {
-                    const newPlayers = [...players]
-                    newPlayers[i].playing = false
-                    setPlayers(newPlayers)
-                })
-            })
-        }
-    }, [])
-
-    return [players, toggle]
+  return (
+    <li className={playing ? 'track is-playing' : 'track'}>
+      <audio ref={audioRef} src={url} preload="none" onEnded={onStop} />
+      <button
+        type="button"
+        className="track-toggle"
+        onClick={onToggle}
+        aria-pressed={playing}
+        aria-label={`${playing ? 'Pause' : 'Play'} ${name}`}
+      >
+        {playing ? (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="6" y="5" width="4" height="14" rx="1" />
+            <rect x="14" y="5" width="4" height="14" rx="1" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
+          </svg>
+        )}
+      </button>
+      <div className="track-info">
+        <span className="track-name">
+          <span className="track-number">{String(number).padStart(2, '0')}</span>
+          {name}
+        </span>
+        <span className="track-source" title={url}>
+          {url}
+        </span>
+      </div>
+    </li>
+  )
 }
 
-const MultiPlayer = ({ urls }) => {
-    const [players, toggle] = useMultiAudio(urls)
+// Plays one source at a time: starting a track pauses the one already playing.
+export default function AudioBook({ urls }) {
+  const [playingIndex, setPlayingIndex] = useState(null)
+  const stop = useCallback(() => setPlayingIndex(null), [])
 
-    return (
-        <div>
-            {players.map((player, i) => (
-                <Player key={i} player={player} toggle={toggle(i)} />
-            ))}
-        </div>
-    )
+  return (
+    <ol className="tracks">
+      {urls.map((url, i) => (
+        <Track
+          key={url}
+          number={i + 1}
+          url={url}
+          playing={i === playingIndex}
+          onToggle={() => setPlayingIndex((current) => (current === i ? null : i))}
+          onStop={stop}
+        />
+      ))}
+    </ol>
+  )
 }
-
-const Player = ({ player, toggle }) => (
-    <div>
-        <p>Stream URL: {player.url}</p>
-        <button onClick={toggle}>{player.playing ? 'Pause' : 'Play'}</button>
-    </div>
-)
-
-
-export default MultiPlayer;

@@ -1,106 +1,82 @@
 # az_portfolio
 
-A personal portfolio sandbox built with [Create React App](https://create-react-app.dev/). It currently holds one experiment: **AudioBook**, a small multi-track audio player that plays one track at a time.
-
-> **Status:** early prototype, last worked on in August 2020. The page still uses the default Create React App look and title.
+A personal portfolio built with [React](https://react.dev/) and [Vite](https://vite.dev/). It currently features **AudioBook**, a small audio player that plays one track at a time.
 
 ## What it does
 
-The app shows the spinning React logo and a list of audio sources. Each source shows its URL and a **Play / Pause** button:
+AudioBook lists audio tracks, each with a name, its source and a play/pause button:
 
-- Starting a track pauses whichever track is already playing.
-- When a track finishes, its button resets to **Play**.
+- Starting a track pauses whichever one is already playing.
+- When a track finishes, or its source can't be played, the button resets.
 
-The player lives in `src/AudioBook.jsx`. It's built around a `useMultiAudio(urls)` hook that creates one `Audio` element per URL and keeps their playing state in sync. The track list is passed in from `src/App.js`:
+The track list is the `TRACKS` array in `src/App.jsx`, and the player lives in `src/AudioBook.jsx`:
 
 ```jsx
-<MultiPlayer
-  urls={[
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-  ]}
-/>
+const TRACKS = [
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+]
+
+<AudioBook urls={TRACKS} />
 ```
 
-The sample tracks come from [SoundHelix](https://www.soundhelix.com/). The first entry in the list is a Google Translate link that carries the text of an article. It's a placeholder for a "reader" idea (having text read aloud) and doesn't play as audio yet.
+The sample tracks come from [SoundHelix](https://www.soundhelix.com/). The first entry in the list is a Google Translate link that carries the text of an article. It's a placeholder for a "reader" idea (having text read aloud) and can't be played as audio yet.
 
 ## Tech stack
 
-- React 16.12 (function components and hooks)
-- Create React App (`react-scripts` 3.3.0)
-- Jest and React Testing Library
+- [React 19](https://react.dev/)
+- [Vite 8](https://vite.dev/) for the dev server and production builds
 - [`gh-pages`](https://github.com/tschaub/gh-pages) for deploying to GitHub Pages
 
 ## Getting started
 
-You need Node.js and npm.
+You need Node.js 20.19+ or 22.12+.
 
 ```bash
 git clone git@github.com:Lyubosumaz/az_portfolio.git
 cd az_portfolio
 npm install
-npm start
+npm run dev
 ```
 
-The dev server runs at http://localhost:3000.
+The dev server runs at http://localhost:5173.
 
-> **Node 17 and newer:** `react-scripts` 3.3.0 uses webpack 4, which fails on Node 17+ with `ERR_OSSL_EVP_UNSUPPORTED`. Use Node 16, or turn on the legacy OpenSSL provider before running any script:
->
-> ```powershell
-> # Windows PowerShell
-> $env:NODE_OPTIONS = "--openssl-legacy-provider"
-> ```
->
-> ```bash
-> # macOS / Linux
-> export NODE_OPTIONS=--openssl-legacy-provider
-> ```
-
-## Available scripts
+## Scripts
 
 | Command | What it does |
 | --- | --- |
-| `npm start` | Runs the dev server with hot reload |
-| `npm test` | Runs Jest in watch mode |
-| `npm run build` | Builds a production bundle into `build/` |
-| `npm run deploy` | Builds, then publishes `build/` to the `gh-pages` branch |
-| `npm run eject` | Ejects from Create React App (one-way) |
+| `npm run dev` | Starts the dev server with hot reload |
+| `npm run build` | Builds the site into `dist/` |
+| `npm run preview` | Serves the built `dist/` folder locally |
+| `npm run deploy` | Builds, then publishes `dist/` to the `gh-pages` branch |
 
 ## Deployment
 
-`npm run deploy` builds the app (through the `predeploy` script) and pushes the output to the `gh-pages` branch. GitHub Pages serves the site from that branch.
+`npm run deploy` builds the site and pushes `dist/` to the `gh-pages` branch. In the repository's **Settings → Pages**, set the source to that branch, and the site is served at:
 
-The built asset paths come from the `homepage` field in `package.json`, which is currently `http://lyubosumaz.github.io/portfolio`. This repository is named `az_portfolio`, so its Pages URL is `https://lyubosumaz.github.io/az_portfolio/`. Update `homepage` to match before deploying; if the two differ, the deployed page can't find its JS and CSS and renders blank.
+https://lyubosumaz.github.io/az_portfolio/
+
+That path comes from `base` in `vite.config.js`. Update it if you rename the repository or move to a custom domain.
 
 ## Project structure
 
 ```
 az_portfolio/
 ├── public/
-│   ├── index.html          # HTML template
-│   ├── manifest.json       # Web app manifest
-│   ├── favicon.ico, logo192.png, logo512.png
+│   ├── favicon.svg
 │   └── robots.txt
 ├── src/
-│   ├── index.js            # Entry point: renders <App /> and unregisters the service worker
-│   ├── App.js              # Root component: defines the track list
-│   ├── AudioBook.jsx       # useMultiAudio hook and the MultiPlayer / Player components
-│   ├── App.css, index.css  # Styles
-│   ├── App.test.js         # Smoke test
-│   ├── setupTests.js       # jest-dom setup
-│   ├── serviceWorker.js    # Create React App service worker (not registered)
-│   └── logo.svg
+│   ├── main.jsx        # Entry point
+│   ├── App.jsx         # Page layout and track list
+│   ├── AudioBook.jsx   # Player components
+│   ├── App.css         # Page and player styles
+│   └── index.css       # Base styles and light/dark colour tokens
+├── index.html
+├── vite.config.js
 ├── package.json
 └── LICENSE
 ```
 
-## Known issues
-
-- **`npm test` fails.** `src/App.test.js` still looks for the default "Learn React" link, which `App.js` no longer renders.
-- **The first track doesn't play.** It's a Google Translate page URL, not an audio file.
-- **`ended` listeners are never removed.** The cleanup in `useMultiAudio` passes a new function to `removeEventListener`, so the original listeners stay attached.
-- **Default metadata.** The page title, description and manifest still say "React App".
-
 ## License
 
-[MIT](LICENSE) © 2020 Lyuboslav Ilkov
+[MIT](LICENSE) © Lyuboslav Ilkov

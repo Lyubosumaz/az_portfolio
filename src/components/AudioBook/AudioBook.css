@@ -1,26 +1,15 @@
-.page {
-  max-width: 42rem;
-  margin: 0 auto;
-  padding: 4rem 1rem;
-}
-
-.page-header h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.page-header p {
-  margin-top: 0.5rem;
-  color: var(--muted);
-}
-
+/* The list numbers the tracks; the counter only restyles that numbering. */
 .tracks {
   display: grid;
   gap: 0.75rem;
   margin: 2.5rem 0 0;
   padding: 0;
   list-style: none;
+  counter-reset: track;
+}
+
+.tracks > li {
+  counter-increment: track;
 }
 
 .track {
@@ -57,7 +46,8 @@
   transform: scale(1.05);
 }
 
-.track-toggle:focus-visible {
+.track-toggle:focus-visible,
+.track-source:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
@@ -74,11 +64,13 @@
 }
 
 .track-name {
+  font-style: normal;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 
-.track-number {
+.track-name::before {
+  content: counter(track, decimal-leading-zero);
   margin-right: 0.5rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
@@ -90,4 +82,11 @@
   color: var(--muted);
   white-space: nowrap;
   text-overflow: ellipsis;
+  text-decoration: none;
+  border-radius: 2px;
+}
+
+.track-source:hover {
+  color: var(--text);
+  text-decoration: underline;
 }

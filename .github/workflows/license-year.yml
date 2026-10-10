@@ -1,0 +1,31 @@
+name: Update copyright year
+
+on:
+  schedule:
+    - cron: '0 0 1 1 *' # every January 1st
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set the end year to the current year
+        run: sed -i -E "s/2020-[0-9]{4} Lyuboslav Ilkov/2020-$(date +%Y) Lyuboslav Ilkov/" LICENSE README.md
+
+      - name: Commit and push if anything changed
+        run: |
+          if git diff --quiet; then
+            echo "Copyright year is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Update copyright year to $(date +%Y)"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -1,0 +1,9 @@
+.site-footer {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.site-footer small {
+  font-size: 0.8125rem;
+}
